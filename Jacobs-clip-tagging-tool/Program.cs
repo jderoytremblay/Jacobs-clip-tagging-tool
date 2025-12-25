@@ -102,8 +102,6 @@ class Program
         {
             dictionary[clip] = new List<string>();
         }
-        Console.WriteLine("The length of the dictionary is: " + dictionary.Count);
-        Console.WriteLine("The length of the clips is: " + clips.Length);
     }
     
     static void ListEntries()
