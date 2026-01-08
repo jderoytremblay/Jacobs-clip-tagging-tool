@@ -52,10 +52,11 @@ class Program
             {
                 Console.WriteLine("1: View clip\n" +
                                   "2: Next clip\n" +
-                                  "3: List clip tags\n" +
-                                  "4: Previous clip\n" +
+                                  "3: Previous clip\n" +
+                                  "4: List clip tags\n" +
                                   "e: Exit\n" +
-                                  "Enter anything else to tag the current clip\n");
+                                  "Enter anything else to tag the current clip\n"+
+                                  "To delete a tag, add \"-\" in front of it");
                 string input = Console.ReadLine();
                 switch (input)
                 {
@@ -64,14 +65,14 @@ class Program
                         taggingLoop = false;
                         i++;
                         break;
-                    case "3": ListClipTags(key); break;
-                    case "4": i = Math.Max(0, i - 1);
+                    case "3": i = Math.Max(0, i - 1);
                         taggingLoop = false; break;
+                    case "4": ListClipTags(key); break;
                     case "e":
                         taggingLoop = false;
                         exit = true;
                         break;
-                    default: dictionary[key].Add(input); break;
+                    default: Tagging(key, input); break;
                 }
             }
 
@@ -79,6 +80,19 @@ class Program
         }
     }
 
+    static void Tagging(string key, string tag)
+    {
+        tag = tag.Trim().ToLower();
+        if (tag.StartsWith("-"))
+        {
+            tag = tag.Substring(1);
+            dictionary[key].Remove(tag);
+        }
+        else if (tag.Length > 0 && !dictionary[key].Contains(tag))
+        {
+            dictionary[key].Add(tag);
+        } 
+    }
     static void ListClipTags(string key)
     {
         foreach (string tag in dictionary[key])
