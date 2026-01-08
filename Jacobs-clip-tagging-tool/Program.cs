@@ -1,28 +1,29 @@
 ﻿using System;
+using System.Text.Json;
 using System.IO;
 using System.Diagnostics;
-
-// TODO: Save/load dictionary to file so tags persist between runs
 
 // One-off personal tagging tool – not hardened, not user-friendly. MVP and nothing more.
 class Program
 {
-    const string ClipPath = @"C:\Users\jacob\Videos\Krunker\Clips";
+    static string clipPath = @"";
     static Dictionary<string, List<string>> dictionary = new Dictionary<string, List<string>>(); 
+    static string savePath = Path.Combine(AppContext.BaseDirectory, "save");
     static void Main(string[] args)
     {
+        Load();
         bool mainLoop = true;
         do
         {
-            Console.WriteLine("1: Create base dictionary\n" +
-                              "2: List entries\n" +
+            Console.WriteLine("1: Manage dictionary\n" +
+                              "2: Save\n" +
                               "3: Begin tagging\n" +
                               "e: Exit\n");
             string input = Console.ReadLine();
             switch (input)
             {
-                case "1": CreateBaseDictionary(); break;
-                case "2": ListEntries(); break;
+                case "1": ManageDictionary(); break;
+                case "2": Save(); break;
                 case "3": BeginTagging(); break;
                 case "e": mainLoop = false; break;
                 default: Console.WriteLine("Invalid input"); break;
@@ -91,26 +92,99 @@ class Program
         Process.Start(
             new ProcessStartInfo
             {
-                FileName = clip, 
+                FileName = Path.Combine(clipPath, clip),
                 UseShellExecute = true
             });
     }
+
+    static void ManageDictionary()
+    {
+        bool dictionaryLoop = true;
+        do
+        {
+            Console.WriteLine("1: New file path\n" +
+                              "2: Create base dictionary (from file path)\n" +
+                              "3: List entries\n" +
+                              "e: Exit\n");
+            string input = Console.ReadLine();
+            switch (input)
+            {
+                case "1": EditPath(); break;
+                case "2": CreateBaseDictionary(); break;
+                case "3": ListEntries(); break;
+                case "e": dictionaryLoop = false; break;
+                default: Console.WriteLine("Invalid input"); break;
+            }
+        }
+        while (dictionaryLoop);
+    }
+    static void EditPath()
+    {
+        Console.WriteLine("Please input the path to the clips folder\n"+
+                          "This will overwrite any already created dictionary, input \"e\" to exit\n"+
+                          "Expected format: C:\\your\\file\\path\\\n");
+        string input = Console.ReadLine();
+        if (input != "e" && input != "")
+        {
+            clipPath = input;
+        } //else exit
+    }
     static void CreateBaseDictionary()
     {
-        string[] clips = Directory.GetFiles(ClipPath, "*.mkv");
-        foreach (string clip in clips)
+        string[] clips = Directory.GetFiles(clipPath, "*.mkv");
+        if (clipPath != "" && clips.Length > 0)
         {
-            dictionary[clip] = new List<string>();
+            foreach (string clip in clips)
+            {
+                string fileName = Path.GetFileName(clip);
+                dictionary[fileName] = new List<string>();
+            }
+            Console.WriteLine("The length of the dictionary is: " + dictionary.Count);
+            Console.WriteLine("The length of the clips is: " + clips.Length);
         }
-        Console.WriteLine("The length of the dictionary is: " + dictionary.Count);
-        Console.WriteLine("The length of the clips is: " + clips.Length);
+    }
+
+    static void Save()
+    {
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true 
+        };
+        
+        string json = JsonSerializer.Serialize(dictionary, options);
+        if (!Directory.Exists(savePath))
+        {
+            Directory.CreateDirectory(savePath);
+        }
+        File.WriteAllText(Path.Combine(savePath, "tags.json"), json);
+        File.WriteAllText(Path.Combine(savePath, "clip-path.json"), clipPath);
+    }
+
+    static void Load()
+    {
+        string tags = Path.Combine(savePath, "tags.json");
+        if (File.Exists(tags))
+        {
+            string json = File.ReadAllText(tags);
+            dictionary = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json);
+        }
+        string clips = Path.Combine(savePath, "clip-path.json");
+        if (File.Exists(clips))
+        {
+            clipPath = File.ReadAllText(clips);
+        }
     }
     
     static void ListEntries()
     {
         foreach (string clip in dictionary.Keys)
         {
-            Console.WriteLine(clip);
+            string tags = "";
+            foreach (string tag in dictionary[clip])
+            {
+                tags += tag + ", ";
+            }
+            Console.WriteLine(clip + ": " + tags);
         }
     }
 }
