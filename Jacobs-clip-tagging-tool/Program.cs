@@ -119,6 +119,7 @@ class Program
             Console.WriteLine("1: New file path\n" +
                               "2: Create base dictionary (from file path)\n" +
                               "3: List entries\n" +
+                              "4: Tag search\n" +
                               "e: Exit\n");
             string input = Console.ReadLine();
             switch (input)
@@ -126,6 +127,7 @@ class Program
                 case "1": EditPath(); break;
                 case "2": CreateBaseDictionary(); break;
                 case "3": ListEntries(); break;
+                case "4": Search(); break;
                 case "e": dictionaryLoop = false; break;
                 default: Console.WriteLine("Invalid input"); break;
             }
@@ -193,12 +195,46 @@ class Program
     {
         foreach (string clip in dictionary.Keys)
         {
-            string tags = "";
-            foreach (string tag in dictionary[clip])
-            {
-                tags += tag + ", ";
-            }
-            Console.WriteLine(clip + ": " + tags);
+            Console.WriteLine(clip + ": " + string.Join(", ", dictionary[clip]));
         }
+    }
+
+    static void Search()
+    {
+        List<string> list = new List<string>();
+        Console.WriteLine("Enter a tag to begin");
+        string prompt = Console.ReadLine();
+        foreach (string key in dictionary.Keys) 
+        {
+            foreach (var tag in dictionary[key]) 
+            {
+                if (tag == prompt)
+                {
+                    list.Add(key);
+                    Console.WriteLine($"{list.Count - 1}. {key}: {string.Join(", ", dictionary[key])}");
+                }
+            }
+        }
+
+        bool searchLoop = true;
+        do
+        {
+            Console.WriteLine("e: exit\n"+
+                              "[index]: open corresponding file\n");
+            string input = Console.ReadLine();
+            switch (input)
+            {
+                case "e": 
+                    searchLoop = false; 
+                    break;
+                default:
+                    if (int.TryParse(input, out int index) && index >= 0 && index < list.Count)
+                    {
+                        PlayClip(list[index]);
+                    }; 
+                    break;
+            }
+            
+        } while (searchLoop);
     }
 }
